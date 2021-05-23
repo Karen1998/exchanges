@@ -1,26 +1,14 @@
 import React, { FC } from 'react'
 import Paper from '@material-ui/core/Paper';
-import {
-  ArgumentAxis,
-  ValueAxis,
-  Chart,
-  LineSeries,
-  ZoomAndPan,
-  Title,
-  Legend
-} from '@devexpress/dx-react-chart-material-ui';
-import { ICalculatedData, IChartDataForStatistic } from 'src/types/types';
+import { ICalculatedData } from 'src/types/types';
 import { Box, Typography } from '@material-ui/core';
 import { timeFormat } from 'src/helpers/timeFormat';
 
-
 interface IProps {
-  graphData: IChartDataForStatistic[];
   additionalData: ICalculatedData;
 }
 
-
-const Graph: FC<IProps> = ({ graphData, additionalData }) => {
+const Graph: FC<IProps> = ({ additionalData }) => {
   return (
     <Paper>
 
@@ -50,7 +38,7 @@ const Graph: FC<IProps> = ({ graphData, additionalData }) => {
         </Typography>
 
         <Typography>
-          Results get count -  {additionalData.length}
+          Results count -  {additionalData.length}
         </Typography>
 
         <Typography>
@@ -61,20 +49,6 @@ const Graph: FC<IProps> = ({ graphData, additionalData }) => {
           Spent time for all calculations - {timeFormat(additionalData.wholeSpentTime)}
         </Typography>
       </Box>
-
-      {/* <Chart
-        data={graphData}
-      >
-        <ArgumentAxis />
-        <ValueAxis />
-
-        <LineSeries
-          valueField="value"
-          argumentField="argument"
-        />
-
-        <ZoomAndPan />
-      </Chart> */}
     </Paper>
   )
 }

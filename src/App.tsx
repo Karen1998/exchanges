@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Container, Typography } from '@material-ui/core';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
+import { wrap } from 'comlink';
 
 import Graph from './components/Graph';
 import GraphActions from './components/GraphActions';
@@ -9,7 +10,6 @@ import { ICalculatedData, IChartData, IChartDataForStatistic } from './types/typ
 
 
 const client = new W3CWebSocket('wss://trade.trademux.net:8800/?password=1234');
-const calculationWorker = new Worker('./helpers/calculations.ts');
 
 
 type TModData = {
@@ -24,13 +24,9 @@ function App() {
     text: 'Connecting ...'
   });
 
-  // Represents saved data for mod data
-  const modDataRef = useRef<{ [key: number]: number }[]>([]);
-
-  const [chartData, setChartData] = useState<IChartDataForStatistic[]>([]);
 
   const chartDataRef = useRef<IChartDataForStatistic[]>([]);
-
+  const modDataRef = useRef<TModData[]>([]);
   const calculatedDataRef = useRef<ICalculatedData>({
     average: 0,
     standardDeviation: 0,
@@ -54,13 +50,20 @@ function App() {
     }
   }, []);
 
-  const calculateValues = (d: IChartData[]) => {
-    calculationWorker.postMessage(d);
+  const calculateValues = (newData: IChartData[]) => {
+    const calculationWorker = new Worker('./workers/calculations', { name: 'calculation-worker', type: 'module' });
+    const calculationWorkerApi = wrap<import('./workers/calculations').CalculationWorker>(calculationWorker)
+    calculationWorkerApi
+      .calculateChartData(calculatedDataRef.current, modDataRef.current, newData)
+      .then((res: {
+        calculatedData: ICalculatedData,
+        modDataRef: TModData[]
+      }) => {
+        calculatedDataRef.current = res.calculatedData;
+        modDataRef.current = res.modDataRef;
+        setLoader(false);
+      });
   };
-
-  calculationWorker.onmessage = (e) => {
-    console.log(e)
-  }
 
   const addDataToCharStatistic = (data: IChartData) => {
     chartDataRef.current.push({
@@ -133,7 +136,6 @@ function App() {
         >
           {showStatistic && (
             <Graph
-              graphData={chartData}
               additionalData={calculatedDataRef.current}
             />
           )}
